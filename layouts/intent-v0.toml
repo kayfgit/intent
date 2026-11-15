@@ -81,9 +81,9 @@ name = "Logic"
 plane = "core"
 left = "P"
 members = [
-  "AND", "OR", "NOT", "IF", "THEN",
-  "BECAUSE", "BUT", "SO", "WITH", "WITHOUT",
-  "TO", "FROM", "IN", "FOR", "LIKE",
+  "AND", "NOT", "IF", "TO", "IN",
+  "OR", "WITH", "FOR", "BUT", "SO",
+  "THEN", "FROM", "BECAUSE", "WITHOUT", "LIKE",
 ]
 
 [[family]]

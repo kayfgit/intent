@@ -1,0 +1,20 @@
+[package]
+name = "intent-cli"
+description = "Command-line tools for Intent layouts: check, stats, sim, how."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "intent"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+intent-core = { path = "../intent-core" }
+
+[dev-dependencies]

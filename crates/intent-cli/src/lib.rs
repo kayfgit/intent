@@ -259,14 +259,14 @@ fn sim(path: &Path, chords: &[String], out: &mut dyn Write, err: &mut dyn Write)
     for chord in parsed {
         let does = describe(engine.layout(), chord);
         let effect = engine.stroke(chord);
-        writeln!(
-            out,
+        let line = format!(
             "{:<12} {}  {:<16} {}",
             chord.to_string(),
             chord.diagram(),
             does,
             effect_note(&effect)
-        )?;
+        );
+        writeln!(out, "{}", line.trim_end())?;
     }
     writeln!(out, "buffer: {}", engine.buffer().utterance)?;
     Ok(OK)

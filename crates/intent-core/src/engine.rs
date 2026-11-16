@@ -428,7 +428,7 @@ mod tests {
                 ("BRIEF", "keep the answer short"),
             ]
         );
-        assert!(Utterance::default().glosses().is_empty());
+        assert_eq!(Utterance::default().glosses(), [] as [(&str, &str); 0]);
         assert!(Utterance::default().is_empty());
     }
 

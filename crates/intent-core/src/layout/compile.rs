@@ -411,8 +411,8 @@ mod tests {
     fn empty_layout_compiles() {
         let layout = layout("");
         assert_eq!(layout.meta().name, "test");
-        assert!(layout.entries().is_empty());
-        assert!(layout.families().is_empty());
+        assert_eq!(layout.entries(), []);
+        assert_eq!(layout.families(), []);
     }
 
     #[test]

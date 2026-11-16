@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Intent</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23172033'/%3E%3Ccircle cx='10' cy='16' r='4.5' fill='%233FC1B8'/%3E%3Ccircle cx='22' cy='16' r='4.5' fill='%23EE7FA9'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div class="bench">
+      <header class="masthead">
+        <div class="masthead-title">
+          <h1>Intent</h1>
+          <p id="layout-name"></p>
+        </div>
+        <p class="masthead-lede">
+          Rest your fingers on the home row and press keys together. One hand spells, two hands
+          mean something, and both thumbs send.
+        </p>
+        <button type="button" id="open-setup">Setup</button>
+      </header>
+
+      <main class="work">
+        <p class="boot-error" id="boot-error" role="alert" hidden></p>
+
+        <section class="entry" aria-label="What you have entered">
+          <div class="result" id="result" hidden>
+            <p id="result-text"></p>
+            <button type="button" id="copy-result">Copy</button>
+          </div>
+          <p class="buffer" id="buffer" aria-live="polite"></p>
+          <div class="entry-actions">
+            <button type="button" id="do-undo">Undo</button>
+            <button type="button" id="do-space">Space</button>
+            <button type="button" id="do-send">Send</button>
+          </div>
+        </section>
+
+        <section class="hands" aria-label="Your ten keys">
+          <div class="hand-pair">
+            <div class="hand hand-left" id="hand-left"></div>
+            <div class="hand hand-right" id="hand-right"></div>
+          </div>
+          <p class="preview" id="preview" aria-live="polite"></p>
+          <div class="latch" id="latch" hidden>
+            <button type="button" id="latch-release">Release</button>
+            <button type="button" id="latch-cancel">Cancel</button>
+            <span>Clicked keys stay down until you release them.</span>
+          </div>
+        </section>
+
+        <section class="families" aria-labelledby="families-heading">
+          <h2 id="families-heading" class="section-title">Families</h2>
+          <div class="planes" id="planes"></div>
+          <div id="family-view"></div>
+        </section>
+
+        <section class="alphabet" aria-labelledby="alphabet-heading">
+          <h2 id="alphabet-heading" class="section-title">Alphabet</h2>
+          <p>
+            One hand alone spells. The shapes are the same on both hands, drawn here for the right
+            hand with the thumb as a bar. Add the other hand's thumb for a capital.
+          </p>
+          <div class="alphabet-grid" id="alphabet"></div>
+        </section>
+      </main>
+
+      <aside class="tape" aria-labelledby="tape-heading">
+        <h2 id="tape-heading" class="tape-title">Tape</h2>
+        <p class="tape-empty" id="tape-empty">Every chord you press prints here.</p>
+        <ol id="tape"></ol>
+      </aside>
+    </div>
+
+    <dialog id="setup" aria-labelledby="setup-heading">
+      <form method="dialog" id="setup-form">
+        <h2 id="setup-heading" class="dialog-title">Setup</h2>
+
+        <fieldset>
+          <legend>Turning chords into sentences</legend>
+          <label for="set-provider">AI provider</label>
+          <select id="set-provider"></select>
+          <p class="field-note" id="provider-note"></p>
+
+          <div id="base-url-row" hidden>
+            <label for="set-base-url">Server address</label>
+            <input id="set-base-url" type="url" placeholder="http://localhost:11434/v1" />
+          </div>
+
+          <label for="set-key">API key</label>
+          <input id="set-key" type="password" autocomplete="off" spellcheck="false" />
+          <p class="field-note">
+            <a id="key-link" href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">Get a free key</a>
+            <span id="key-note">
+              The key stays in this browser and is sent only to the provider you chose.
+            </span>
+          </p>
+
+          <label for="set-model">Model</label>
+          <input id="set-model" type="text" list="model-list" spellcheck="false" />
+          <datalist id="model-list"></datalist>
+
+          <label for="set-language">Write in</label>
+          <input id="set-language" type="text" placeholder="English" />
+        </fieldset>
+
+        <fieldset>
+          <legend>Thumb keys</legend>
+          <p class="field-note">
+            Fingers stay on A S D F and J K L and the key after it. Pick the keys your thumbs reach
+            most easily.
+          </p>
+          <label for="set-left-thumb">Left thumb</label>
+          <select id="set-left-thumb"></select>
+          <label for="set-right-thumb">Right thumb</label>
+          <select id="set-right-thumb"></select>
+        </fieldset>
+
+        <p class="field-note" id="setup-status" role="status"></p>
+        <div class="dialog-actions">
+          <button type="submit" id="save-setup" value="save">Save</button>
+          <button type="submit" value="cancel" formnovalidate>Cancel</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -141,8 +141,9 @@ learn and either hand can type any letter. Alternating hands keeps spelling
 flowing. The four single-finger chords are the four most common letters.
 
 Spelling is the fallback, not the main road. It only has to be good enough for
-names, identifiers and rare words, and the AI is expected to tolerate
-shortened spellings.
+names, identifiers and rare words. Spelled words are passed to the AI as
+literal text and copied exactly, so an identifier is never "corrected".
+Letting the AI expand shortened spellings is an open question.
 
 ## Architecture
 
@@ -158,8 +159,10 @@ key events ─► StrokeDetector ─► Engine ─► Effect ─► host
   web trainer or run on a wearable's microcontroller.
 - **`intent-cli`** is the tool for working on layouts: `check`, `stats`, `sim`
   and `how`.
-- **Hosts** (not built yet) capture real keys, show the overlay, call the
-  decoder and type the result.
+- **`intent-wasm`** exposes the engine to web pages as WebAssembly.
+- **Hosts** capture real keys, show hints, call the decoder and deliver the
+  result. The web demo in `web/` is the first one. A desktop host that types
+  into other apps is not built yet.
 
 The engine keeps a log of strokes and derives the buffer from it. That is why
 undo is exact: it removes the last log entry and nothing else.
@@ -168,16 +171,63 @@ The utterance has a plain wire format. Concepts are bare uppercase tokens and
 spelled words are quoted, so they can never be confused:
 `RENAME "foo" TO "bar"`.
 
+## The decoder
+
+The decoder is any chat model that turns an utterance into a sentence. The
+core builds the messages (`intent_core::prompt`): short instructions, four
+worked examples, a few earlier turns for context, then the utterance with the
+meaning of any clause-sized concepts it uses. The host sends them. The fixed
+part of the prompt is kept near 400 tokens because free tiers count tokens.
+
+### Choosing a free provider
+
+Researched in November 2026. An input method needs a reply in well under a
+second, limits that survive a practice session, and an API a web page can
+call directly.
+
+| Provider | Free tier | Catch |
+|---|---|---|
+| **Groq** (default) | No card. About 30 requests a minute and 1,000 a day per model, with daily token caps | The daily token cap allows a few hundred decodes a day |
+| Google Gemini | Flash and Flash-Lite models are free | Google may use free-tier content to improve its products, and no longer publishes the free limits |
+| Cerebras | Sources disagree on whether a lasting free tier still exists | Reported 5 requests a minute on the trial, too few for typing |
+| OpenRouter | Free model variants | 50 requests a day unless you buy credits |
+| Local (Ollama and similar) | Free and private | Needs a capable machine and setup |
+
+Groq is the default because its limits are published and stable, it needs no
+card, it is fast (its model page lists 280 tokens a second for
+`llama-3.3-70b-versatile`, the default model), and its data page says
+inference data is not retained by default, apart from temporary logs for
+abuse monitoring. The four hosted providers answer browser requests: their
+APIs returned permissive CORS headers when checked.
+
+Every provider above speaks the same OpenAI-style chat format, so the demo
+has one small client and the provider is a setting. Limits change often;
+the numbers here will go stale.
+
+Sources: [Groq models](https://console.groq.com/docs/models),
+[Groq rate limits](https://console.groq.com/docs/rate-limits),
+[Groq data handling](https://console.groq.com/docs/your-data),
+[Gemini pricing](https://aistudio.google.com/docs/pricing),
+[OpenRouter's comparison of free tiers](https://openrouter.ai/blog/tutorials/free-llm-apis-compared/),
+[Cerebras rate limits](https://inference-docs.cerebras.ai/support/rate-limits).
+
+### What is not known yet
+
+The prompt has never been scored against real models. There is no test set
+of utterances with expected sentences, so nobody knows how often the decoder
+gets it right, or how the choice of model changes that. Building that test
+set is the next step of this milestone.
+
 ## Roadmap
 
 | Milestone | What it delivers | Status |
 |---|---|---|
 | 1. Foundation | Core engine, layout format and compiler, v0 layout, CLI, CI | Done |
-| 2. Decoder | Turn an utterance into text with a language model. Context from earlier turns, several candidates, one-stroke correction, a latency budget, an offline test set to score layouts and prompts | Next |
+| 2. Decoder | Turn an utterance into text with a language model. Context from earlier turns, several candidates, one-stroke correction, a latency budget, an offline test set to score layouts and prompts | Started: prompt builder and provider client work. No test set, candidates or correction yet |
 | 3. Windows host | Global key capture, live hint overlay, typing into any app | Planned |
 | 4. Trainer | Drills with spaced repetition. Records words per minute, strokes per word, correction rate and learning curves | Planned |
 | 5. Fitted layout | Re-fit the effort weights and the token order from recorded sessions and a corpus of real prompts | Planned |
-| 6. Web demo | The same engine in the browser through WebAssembly | Planned |
+| 6. Web demo | The same engine in the browser through WebAssembly | First version done: live hints, families, alphabet, tape, AI expansion |
 | 7. Hardware | A ten-key wearable or split board speaking the same key events | Planned |
 
 ## Open questions

@@ -12,10 +12,10 @@ result:   Fix the bug in login and add tests that cover it.
 
 ## Status
 
-Early. Milestone 1 of 7 is done: the core engine, the layout format, the v0
-layout and the command-line tools. There is **no AI expansion and no keyboard
-capture yet**, so you cannot type with it today. See the
-[roadmap](docs/DESIGN.md#roadmap).
+Early. The core engine, the layout format, the v0 layout and the
+command-line tools are done, and there is a **web demo you can try**. The
+demo works inside its own page only: it cannot type into other apps yet. See
+the [roadmap](docs/DESIGN.md#roadmap).
 
 ## How it works
 
@@ -33,9 +33,35 @@ ring, middle, index and thumb. `I-M` is left index plus right middle.
 
 The full reasoning is in [docs/DESIGN.md](docs/DESIGN.md).
 
+## Try the demo
+
+Requires [Rust](https://rustup.rs), [wasm-pack](https://rustwasm.github.io/wasm-pack/),
+Node 22 and [pnpm](https://pnpm.io).
+
+```bash
+pnpm --dir web install
+```
+
+```bash
+pnpm --dir web dev
+```
+
+Then open <http://localhost:5173>.
+
+- Fingers rest on `A S D F` and `J K L` plus the key after it. Thumbs use `C`
+  and `M` (changeable in Setup).
+- Hold keys and the page shows what the chord will do before you release it.
+  The tape on the side prints every chord you press.
+- Send with both thumbs. Without an API key you see the compressed form only.
+  Add a free [Groq](https://console.groq.com/keys) key in Setup to get full
+  sentences. The key stays in your browser and goes only to the provider.
+- If your keyboard drops keys in big chords, click the on-screen keys and
+  press Release instead.
+
 ## Try the tools
 
-Requires [Rust](https://rustup.rs) 1.88 or newer.
+Requires [Rust](https://rustup.rs). The exact version is pinned in
+`rust-toolchain.toml` and installs itself on first use.
 
 Validate the layout:
 
@@ -82,13 +108,19 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
-CI runs all three plus a strict layout check on Linux and Windows.
+For the web demo, from the `web` folder: `pnpm lint`, `pnpm typecheck`,
+`pnpm test` and `pnpm build`.
+
+CI runs all of it: the Rust checks plus a strict layout check on Linux and
+Windows, and the web checks on Linux.
 
 ## Project layout
 
 ```
 crates/intent-core/   pure engine: keys, chords, planes, effort, strokes, layout, engine
 crates/intent-cli/    the `intent` command-line tool
+crates/intent-wasm/   WebAssembly bridge between the engine and a web page
+web/                  the web demo (Vite + TypeScript)
 layouts/              layout files
 docs/DESIGN.md        design, research notes, roadmap
 ```

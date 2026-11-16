@@ -23,3 +23,17 @@ All notable changes to this project are recorded here. The format follows
 - Design document covering the research background, chord grammar,
   architecture and roadmap.
 - CI on Linux and Windows: formatting, lints, tests and a strict layout check.
+- A web demo (`web/`): press chords on the home row, see what each chord
+  will do before releasing it, browse families and the alphabet, and read a
+  tape of every stroke. Works with the mouse too.
+- AI expansion in the demo through any OpenAI-compatible provider, with the
+  user's own key kept in the browser. Groq is the default; Gemini and custom
+  or local servers are built in.
+- `intent-core`: a `Session` that joins the stroke detector and the engine,
+  and a `prompt` module that builds the messages a decoder model receives.
+- `intent-wasm`: a WebAssembly bridge exposing the engine to web pages.
+
+### Changed
+
+- The Rust toolchain is pinned in `rust-toolchain.toml`, so local runs and
+  CI use the same compiler and lints.

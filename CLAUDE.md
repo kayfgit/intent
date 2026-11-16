@@ -19,6 +19,19 @@ cargo run -p intent-cli -- check layouts/intent-v0.toml --strict
 
 All four must pass before a commit. CI runs the same on Linux and Windows.
 
+For the web demo, run these from `web/`:
+
+```bash
+pnpm wasm        # compile crates/intent-wasm into web/src/wasm (needs wasm-pack)
+pnpm lint
+pnpm typecheck
+pnpm test        # needs `pnpm wasm` first: one suite runs the real engine
+pnpm dev         # http://localhost:5173
+```
+
+The Rust version is pinned in `rust-toolchain.toml`. Bump it on purpose, then
+fix whatever the newer clippy reports.
+
 ## Structure
 
 - `crates/intent-core`: the engine. Pure: no I/O, no clock, no `unsafe`, no
@@ -27,6 +40,11 @@ All four must pass before a commit. CI runs the same on Linux and Windows.
 - `crates/intent-cli`: the `intent` tool. All logic sits behind
   `intent_cli::run`, which takes its output streams as arguments so tests do
   not spawn processes.
+- `crates/intent-wasm`: the WebAssembly bridge. `view.rs` holds all behaviour
+  as plain Rust, tested natively. `lib.rs` is only the `wasm-bindgen` wrapper.
+- `web/`: the demo, in plain TypeScript with no framework. `engine.ts` wraps
+  the WebAssembly module, `decoder.ts` calls the AI provider, `app.ts` draws
+  the page.
 - `layouts/intent-v0.toml`: the shipped layout.
 
 ## Rules that are easy to break
@@ -45,6 +63,14 @@ All four must pass before a commit. CI runs the same on Linux and Windows.
   decoder picks the part of speech.
 - **No speed claims without measurements.** Docs state what was measured, or
   say it is unknown.
+- **The JSON shape is a contract.** `crates/intent-wasm/src/view.rs` and
+  `web/src/engine.ts` describe the same data. Change both together; a Rust
+  test locks the shape.
+- **The core never does networking.** `intent-core::prompt` builds decoder
+  messages; hosts send them.
+- **API keys are the user's own.** The demo keeps a key in the browser's
+  storage and sends it only to the chosen provider. Never put a key in the
+  repository or in a `VITE_` variable, which would ship it to every visitor.
 
 ## Conventions
 

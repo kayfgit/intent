@@ -1,0 +1,262 @@
+# Intent layout v0
+#
+# A seed layout for developers talking to AI coding assistants. It is a first
+# hypothesis: the order of everything below is meant to be re-fitted from real
+# usage once the trainer records it.
+#
+# How to read this file
+#   - You never write chords here. You list things in priority order and the
+#     format gives the easiest shapes to whatever comes first.
+#   - Shape order for members and families, easiest first:
+#       I  M  R  P  IM  MR  IR  RP  MP  IMR  IP  MRP  IMP  IRP  IMRP
+#     (I = index, M = middle, R = ring, P = pinky)
+#   - Check any change with:  cargo run -p intent-cli -- check layouts/intent-v0.toml
+
+[layout]
+name = "intent-v0"
+version = "0.1.0"
+description = "Seed layout for developers talking to AI coding assistants."
+
+# Thumb-only chords: the three things you do most.
+[thumbs]
+left = "undo"   # take back the last stroke
+right = "space" # end the word being spelled
+both = "send"   # hand the buffer to the AI
+
+# One-hand chords spell. Both hands get the same map, so you learn 30 shapes
+# once and can alternate hands. Adding the opposite thumb gives the capital.
+#
+# Order is a blend of English and Portuguese letter frequency, most common
+# first, so the four single-finger chords are e a o i.
+[spelling]
+keys = "eaoistnrdumlchgpfvbwykqjxz,.-'"
+
+[spelling.shift]
+"," = ";"
+"." = ":"
+"-" = "_"
+"'" = '"'
+
+# ---------------------------------------------------------------------------
+# Core plane: fingers of both hands, no thumbs. Left hand picks the family,
+# right hand picks the member.
+# ---------------------------------------------------------------------------
+
+[[family]]
+id = "act"
+name = "Actions"
+plane = "core"
+left = "I"
+members = [
+  "MAKE", "FIX", "CHANGE", "ADD", "REMOVE",
+  "EXPLAIN", "FIND", "SHOW", "RUN", "USE",
+  "CHECK", "MOVE", "RENAME", "REFACTOR", "REVIEW",
+]
+
+[[family]]
+id = "thing"
+name = "Things"
+plane = "core"
+left = "M"
+members = [
+  "THIS", "CODE", "FUNCTION", "FILE", "ERROR",
+  "TEST", "BUG", "TYPE", "VARIABLE", "CLASS",
+  "API", "DATA", "CONFIG", "UI", "DOCS",
+]
+
+[[family]]
+id = "quality"
+name = "Qualities"
+plane = "core"
+left = "R"
+members = [
+  "NEW", "SAME", "ALL", "MORE", "LESS",
+  "SIMPLE", "FAST", "BETTER", "DIFFERENT", "CORRECT",
+  "WRONG", "ONLY", "ALSO", "EVERY", "OTHER",
+]
+
+[[family]]
+id = "logic"
+name = "Logic"
+plane = "core"
+left = "P"
+members = [
+  "AND", "NOT", "IF", "TO", "IN",
+  "OR", "WITH", "FOR", "BUT", "SO",
+  "THEN", "FROM", "BECAUSE", "WITHOUT", "LIKE",
+]
+
+[[family]]
+id = "talk"
+name = "Talk"
+plane = "core"
+left = "IM"
+members = [
+  "YES", "NO", "PLEASE", "THANKS", "WHY",
+  "HOW", "WHAT", "WHERE", "WHEN", "WHICH",
+  "OK", "WAIT", "CONTINUE", "AGAIN", "MAYBE",
+]
+
+[[family]]
+id = "who"
+name = "Who and intent"
+plane = "core"
+left = "MR"
+members = [
+  "I", "YOU", "WE", "IT", "THEY",
+  "CAN", "SHOULD", "MUST", "WANT", "NEED",
+  "WILL", "THINK", "KNOW", "TRY", "LET",
+]
+
+# Directives stand for a whole clause each. This is where one stroke saves the
+# most typing, so each carries a gloss telling the AI exactly what it means.
+[[family]]
+id = "directive"
+name = "Directives"
+plane = "core"
+left = "IR"
+members = [
+  { token = "WITH_TESTS", gloss = "add or update tests that cover this" },
+  { token = "STEP_BY_STEP", gloss = "work through it one step at a time" },
+  { token = "MINIMAL_CHANGE", gloss = "make the smallest change that works" },
+  { token = "KEEP_API", gloss = "do not change public interfaces" },
+  { token = "KEEP_STYLE", gloss = "match the existing code style" },
+  { token = "PLAN_FIRST", gloss = "show a plan before doing anything" },
+  { token = "NO_EDIT", gloss = "do not change any files, only answer" },
+  { token = "BRIEF", gloss = "keep the answer short" },
+  { token = "DETAILED", gloss = "give a thorough, detailed answer" },
+  { token = "SHOW_DIFF", gloss = "show exactly what changed" },
+  { token = "ASK_FIRST", gloss = "ask me before anything risky or unclear" },
+  { token = "DOUBLE_CHECK", gloss = "verify the result before reporting it" },
+  { token = "NO_NEW_DEPS", gloss = "do not add dependencies" },
+  { token = "UPDATE_DOCS", gloss = "update the documentation to match" },
+  { token = "AS_BEFORE", gloss = "do it the same way as last time" },
+]
+
+[[family]]
+id = "time"
+name = "Time and order"
+plane = "core"
+left = "RP"
+members = [
+  "NOW", "BEFORE", "AFTER", "FIRST", "NEXT",
+  "LAST", "LATER", "ALWAYS", "NEVER", "ALREADY",
+  "STILL", "UNTIL", "WHILE", "ONCE", "PREVIOUS",
+]
+
+[[family]]
+id = "flow"
+name = "Workflow"
+plane = "core"
+left = "MP"
+members = [
+  "COMMIT", "PUSH", "PULL", "MERGE", "BRANCH",
+  "BUILD", "DEPLOY", "INSTALL", "DEBUG", "LOG",
+  "REVERT", "RELEASE", "LINT", "FORMAT", "PR",
+]
+
+[[family]]
+id = "state"
+name = "States"
+plane = "core"
+left = "IMR"
+members = [
+  "DONE", "BROKEN", "WORKING", "FAILING", "SLOW",
+  "MISSING", "UNUSED", "READY", "STUCK", "UNCLEAR",
+  "IMPORTANT", "OPTIONAL", "POSSIBLE", "SURE", "CONFUSED",
+]
+
+# ---------------------------------------------------------------------------
+# Extended plane: the same two-hand chords plus the right thumb.
+# ---------------------------------------------------------------------------
+
+[[family]]
+id = "tech"
+name = "Tech"
+plane = "extended"
+left = "I"
+members = [
+  "SERVER", "CLIENT", "DATABASE", "ENDPOINT", "REQUEST",
+  "RESPONSE", "QUERY", "CACHE", "MODULE", "PACKAGE",
+  "DEPENDENCY", "INTERFACE", "COMPONENT", "SCHEMA", "MIGRATION",
+]
+
+[[family]]
+id = "tone"
+name = "Tone and form"
+plane = "extended"
+left = "M"
+members = [
+  "FORMAL", "CASUAL", "POLITE", "DIRECT", "FRIENDLY",
+  "TECHNICAL", "AS_QUESTION", "AS_LIST", "AS_SUMMARY", "AS_EXAMPLE",
+  "GENTLE", "FIRM", "CONFIDENT", "HUMBLE", "NEUTRAL",
+]
+
+[[family]]
+id = "people"
+name = "People and work"
+plane = "extended"
+left = "R"
+members = [
+  "GREET", "NAME", "MEET", "SEND", "MESSAGE",
+  "EMAIL", "TEAM", "PROJECT", "TASK", "ISSUE",
+  "QUESTION", "ANSWER", "IDEA", "PROBLEM", "SOLUTION",
+]
+
+# ---------------------------------------------------------------------------
+# Literal plane: two-hand chords plus the left thumb. Exact characters and
+# keys, for when the AI must not guess.
+# ---------------------------------------------------------------------------
+
+[[family]]
+id = "digits"
+name = "Digits"
+plane = "literal"
+kind = "text"
+left = "I"
+members = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+
+[[family]]
+id = "brackets"
+name = "Brackets and quotes"
+plane = "literal"
+kind = "text"
+left = "M"
+members = ["(", ")", "[", "]", "{", "}", "<", ">", '"', "'", "`"]
+
+[[family]]
+id = "operators"
+name = "Operators"
+plane = "literal"
+kind = "text"
+left = "R"
+members = ["=", "+", "-", "*", "/", "!", "?", "&", "|", "%", "^", "~"]
+
+[[family]]
+id = "marks"
+name = "Marks"
+plane = "literal"
+kind = "text"
+left = "P"
+members = [".", ",", ":", ";", "_", "@", "#", "$", '\']
+
+# Arrows sit on the four single fingers in the order left, down, up, right.
+[[family]]
+id = "keys"
+name = "Keys"
+plane = "literal"
+kind = "command"
+left = "IM"
+members = [
+  "left", "down", "up", "right", "enter",
+  "tab", "escape", "backspace", "delete", "home",
+  "end", "word-left", "word-right", "page-up", "page-down",
+]
+
+[[family]]
+id = "buffer"
+name = "Buffer"
+plane = "literal"
+kind = "command"
+left = "MR"
+members = ["clear"]

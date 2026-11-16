@@ -1,0 +1,25 @@
+[package]
+name = "intent-cli"
+description = "Command-line tools for Intent layouts: check, stats, sim, how."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+name = "intent_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "intent"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+clap = { version = "4.6.7", features = ["derive"] }
+intent-core = { path = "../intent-core" }
+
+[dev-dependencies]

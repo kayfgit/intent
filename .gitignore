@@ -1,0 +1,17 @@
+# Build output
+/target
+
+# Secrets: never commit these
+.env
+.env.*
+!.env.example
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local agent settings
+.claude/settings.local.json

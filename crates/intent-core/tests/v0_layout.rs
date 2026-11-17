@@ -72,7 +72,7 @@ fn every_concept_resolves_back_to_its_own_chord() {
             assert_eq!(layout.lookup(entry.chord), Some(entry));
         }
     }
-    assert_eq!(concepts, 195);
+    assert_eq!(concepts, 245);
 }
 
 #[test]
@@ -141,6 +141,6 @@ fn plane_usage_adds_up() {
     assert_eq!(layout.plane_usage(Plane::Spell(Hand::Left)), 30);
     assert_eq!(layout.plane_usage(Plane::SpellShift(Hand::Right)), 30);
     assert_eq!(layout.plane_usage(Plane::Core), 150);
-    assert_eq!(layout.plane_usage(Plane::Extended), 45);
+    assert_eq!(layout.plane_usage(Plane::Extended), 95);
     assert_eq!(layout.plane_usage(Plane::User), 0);
 }

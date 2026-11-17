@@ -1,0 +1,767 @@
+/*
+  Intent demo.
+
+  The visual language is the fingering chart: filled dots are pressed keys.
+  Teal is always the left hand and raspberry always the right, so colour
+  carries information rather than decoration. Amber marks "this is what
+  fires". Everything else stays quiet.
+*/
+
+:root {
+  --paper: #edf0f3;
+  --sheet: #f8f9fb;
+  --ink: #172033;
+  --ink-soft: #55607a;
+  --line: #c5ccd6;
+  --left: #0b7a75;
+  --right: #a8326b;
+  --signal: #e0a100;
+  --signal-wash: #fbeec4;
+  --problem: #a23a1c;
+
+  --font: "Recursive Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --step--1: 0.8125rem;
+  --step-0: 0.9375rem;
+  --step-1: 1.125rem;
+  --step-2: 1.5rem;
+  --step-3: 2.375rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #131826;
+    --sheet: #1a2132;
+    --ink: #e6eaf2;
+    --ink-soft: #9aa5bd;
+    --line: #2f3950;
+    --left: #3fc1b8;
+    --right: #ee7fa9;
+    --signal: #ffc43d;
+    --signal-wash: #3f3413;
+    --problem: #ff9a7a;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font);
+  font-size: 100%;
+  font-variation-settings:
+    "MONO" 0,
+    "CASL" 0,
+    "CRSV" 0.5;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+body {
+  margin: 0;
+  font-size: var(--step-0);
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+h2 {
+  font-size: var(--step-1);
+  font-weight: 640;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  font-variation-settings: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--sheet);
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--ink-soft);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+/* Chord notation lines up better in the monospaced cut of the same face. */
+.chord {
+  font-variation-settings:
+    "MONO" 1,
+    "CASL" 0;
+  font-weight: 560;
+}
+
+/* --- Page frame --------------------------------------------------------- */
+
+.bench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.masthead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem 1.5rem;
+  align-items: start;
+  padding: 1.75rem 1.5rem 0;
+}
+
+.masthead-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.masthead h1 {
+  font-size: var(--step-3);
+  font-weight: 780;
+  font-variation-settings:
+    "MONO" 0,
+    "CASL" 1;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.masthead-title p {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+.masthead-lede {
+  grid-column: 1;
+  max-width: 62ch;
+  color: var(--ink-soft);
+}
+
+.masthead > button {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.work {
+  display: grid;
+  /* Without this the column grows to fit both hands side by side. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2.75rem;
+  padding: 2.25rem 1.5rem 4rem;
+  align-content: start;
+}
+
+.section-title {
+  margin-bottom: 0.75rem;
+}
+
+.boot-error {
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--problem);
+  color: var(--problem);
+  background: var(--sheet);
+}
+
+/* --- What you have entered --------------------------------------------- */
+
+.result {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-left: 0.9rem;
+  border-left: 3px solid var(--signal);
+}
+
+.result p {
+  font-size: var(--step-2);
+  font-weight: 520;
+  line-height: 1.3;
+  max-width: 40ch;
+}
+
+.buffer {
+  min-height: 2.6rem;
+  font-size: var(--step-2);
+  line-height: 1.6;
+}
+
+.buffer-empty {
+  color: var(--ink-soft);
+  font-size: var(--step-1);
+}
+
+.token,
+.label-concept {
+  font-weight: 680;
+  letter-spacing: 0.01em;
+  font-variation-settings:
+    "MONO" 0,
+    "CASL" 0.6;
+}
+
+.word {
+  color: var(--ink-soft);
+}
+
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.12em;
+  margin-left: 0.08em;
+  background: var(--signal);
+}
+
+.entry-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+/* --- The ten keys ------------------------------------------------------- */
+
+.hand-pair {
+  /* One size drives every key, so both hands fit side by side when they can. */
+  --key: clamp(3.1rem, 5vw, 4rem);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 1.75rem;
+  padding-bottom: 1.25rem;
+}
+
+.hand {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.key {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: var(--key);
+  height: var(--key);
+  padding: 0;
+  border: 2px solid var(--hand);
+  border-radius: 50%;
+  background: transparent;
+  line-height: 1.1;
+  transition: transform 60ms ease-out;
+}
+
+.hand-left .key {
+  --hand: var(--left);
+}
+
+.hand-right .key {
+  --hand: var(--right);
+}
+
+.key:hover:not(:disabled) {
+  border-color: var(--hand);
+  background: color-mix(in srgb, var(--hand) 10%, transparent);
+}
+
+.key-legend {
+  font-size: var(--step-1);
+  font-weight: 700;
+}
+
+.key-finger {
+  font-size: 0.6875rem;
+  color: var(--ink-soft);
+}
+
+/* Fingers are different lengths; the keys sit where fingertips land. */
+.key-pinky {
+  margin-top: 1.5rem;
+}
+
+.key-ring {
+  margin-top: 0.45rem;
+}
+
+.key-index {
+  margin-top: 0.6rem;
+}
+
+.key-thumb {
+  width: calc(var(--key) * 1.19);
+  height: calc(var(--key) * 0.75);
+  margin-top: calc(var(--key) * 1.15);
+  border-radius: 0.9rem;
+}
+
+.hand-left .key-thumb {
+  margin-left: -1.4rem;
+}
+
+.hand-right .key-thumb {
+  margin-right: -1.4rem;
+}
+
+.key.is-pending {
+  background: color-mix(in srgb, var(--hand) 28%, transparent);
+}
+
+.key.is-down {
+  background: var(--hand);
+  color: var(--paper);
+  transform: translateY(2px);
+}
+
+.key.is-down .key-finger {
+  color: inherit;
+}
+
+.preview {
+  min-height: 1.5rem;
+  max-width: 62ch;
+}
+
+.latch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+}
+
+.latch[hidden],
+.result[hidden] {
+  display: none;
+}
+
+#latch-release {
+  border-color: var(--signal);
+  background: var(--signal-wash);
+}
+
+/* --- Fingering glyphs --------------------------------------------------- */
+
+.glyph {
+  flex: none;
+  overflow: visible;
+}
+
+.mark {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1.1;
+}
+
+.mark-left.is-on {
+  fill: var(--left);
+  stroke: var(--left);
+}
+
+.mark-right.is-on {
+  fill: var(--right);
+  stroke: var(--right);
+}
+
+/* --- Families ----------------------------------------------------------- */
+
+.planes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.planes button {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  background: transparent;
+}
+
+.planes button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.plane-how {
+  font-size: var(--step--1);
+  opacity: 0.72;
+}
+
+.family-note {
+  margin-bottom: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.family-list {
+  display: grid;
+  gap: 0.1rem;
+  max-width: 46rem;
+}
+
+.family-list button {
+  display: grid;
+  grid-template-columns: 5.2rem 11rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border-color: transparent;
+  border-radius: 0.3rem;
+  background: transparent;
+  text-align: left;
+}
+
+.family-list button:hover {
+  border-color: var(--line);
+  background: var(--sheet);
+}
+
+.family-name {
+  font-weight: 620;
+}
+
+.family-sample {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.family-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.family-heading h3 {
+  font-size: var(--step-1);
+  font-weight: 640;
+}
+
+button.quiet {
+  margin-left: auto;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.75rem, 1fr));
+  gap: 0.35rem;
+  max-width: 50rem;
+}
+
+.member {
+  display: grid;
+  gap: 0.3rem;
+  justify-items: start;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: transparent;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.member .label {
+  font-size: var(--step--1);
+}
+
+.member.is-free {
+  border-style: dashed;
+  color: var(--ink-soft);
+}
+
+.member.is-current,
+.letter.is-current {
+  border-color: var(--signal);
+  background: var(--signal-wash);
+}
+
+.label-text {
+  padding: 0 0.4em;
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+  font-variation-settings:
+    "MONO" 1,
+    "CASL" 0;
+  font-weight: 600;
+}
+
+.label-command {
+  font-style: italic;
+  font-variation-settings:
+    "MONO" 0,
+    "CASL" 0,
+    "slnt" -12,
+    "CRSV" 1;
+}
+
+.label-none {
+  color: var(--ink-soft);
+}
+
+/* --- Alphabet ----------------------------------------------------------- */
+
+.alphabet > p {
+  max-width: 62ch;
+  margin-bottom: 1rem;
+  color: var(--ink-soft);
+}
+
+.alphabet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.6rem, 1fr));
+  gap: 0.35rem;
+  max-width: 50rem;
+}
+
+.letter {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.15rem 0.4rem;
+  align-items: baseline;
+  justify-content: start;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: transparent;
+  text-align: left;
+}
+
+.letter .glyph {
+  grid-column: 1 / -1;
+}
+
+.letter-text {
+  font-size: var(--step-1);
+  font-weight: 700;
+}
+
+.letter-shifted {
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+}
+
+/* --- Tape --------------------------------------------------------------- */
+
+.tape {
+  padding: 1.5rem 1.5rem 2rem;
+  border-top: 1px solid var(--line);
+  background: var(--sheet);
+}
+
+.tape-title {
+  margin-bottom: 0.6rem;
+}
+
+.tape-empty {
+  color: var(--ink-soft);
+}
+
+.tape-stroke {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.16rem 0;
+  font-size: var(--step--1);
+}
+
+.tape-aside {
+  color: var(--ink-soft);
+}
+
+.tape-sent {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.6rem 0 1rem;
+  padding: 0.7rem 0 0.8rem;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.sent-wire {
+  font-size: var(--step--1);
+  font-weight: 640;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+
+.sent-text {
+  font-size: var(--step-1);
+  line-height: 1.35;
+}
+
+.sent-text.is-waiting,
+.sent-stats {
+  color: var(--ink-soft);
+}
+
+.sent-text.is-problem {
+  color: var(--problem);
+  font-size: var(--step-0);
+}
+
+.sent-stats {
+  font-size: var(--step--1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tape-stroke,
+  .tape-sent {
+    animation: feed 140ms ease-out;
+  }
+}
+
+@keyframes feed {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem);
+  }
+}
+
+/* --- Setup dialog ------------------------------------------------------- */
+
+dialog {
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+dialog::backdrop {
+  background: rgb(10 14 24 / 55%);
+}
+
+.dialog-title {
+  margin-bottom: 1rem;
+  font-size: var(--step-2);
+}
+
+fieldset {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  margin-bottom: 0.5rem;
+  padding: 0;
+  font-weight: 640;
+}
+
+label {
+  margin-top: 0.55rem;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--sheet);
+}
+
+.field-note {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+#base-url-row {
+  display: grid;
+  gap: 0.3rem;
+}
+
+#base-url-row[hidden],
+#key-link[hidden] {
+  display: none;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+#save-setup {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* --- Wide screens: the tape runs down the side like a paper strip -------- */
+
+@media (min-width: 64rem) {
+  .bench {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-rows: auto 1fr;
+  }
+
+  .masthead,
+  .work {
+    grid-column: 1;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+
+  .tape {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+}

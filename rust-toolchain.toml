@@ -3,3 +3,5 @@
 # Bump on purpose, then fix whatever the newer clippy reports.
 channel = "1.98.0"
 components = ["rustfmt", "clippy"]
+# The web demo compiles the core to WebAssembly.
+targets = ["wasm32-unknown-unknown"]

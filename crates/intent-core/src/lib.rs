@@ -10,6 +10,8 @@ pub mod effort;
 pub mod engine;
 pub mod key;
 pub mod layout;
+pub mod prompt;
+pub mod session;
 pub mod stroke;
 
 pub use action::{Action, Command, Concept};
@@ -18,4 +20,5 @@ pub use effort::EffortModel;
 pub use engine::{Buffer, Effect, Engine, Item, Utterance};
 pub use key::{Finger, Hand, Key};
 pub use layout::{Layout, LayoutError};
+pub use session::{Outcome, Session};
 pub use stroke::{KeyAction, KeyEvent, Stroke, StrokeDetector};

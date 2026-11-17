@@ -70,20 +70,26 @@ You turn compressed input into the message the user meant to write. The user is 
 
 Input format:
 - UPPERCASE tokens are concepts. Expand them into natural wording. A token can act as any part of speech.
-- \"Quoted\" words are literal. Copy them exactly, keeping their spelling and case.
+- \"Quoted\" words are literal. Keep their spelling and capitals, except that a sentence starts with a capital. The quotes only mark them: never put quote marks in your reply.
+- The input leaves out articles (a, an, the) and forms of \"be\" (am, is, are, was, were). Put them back wherever English needs them, next to quoted words too.
 - A \"Meanings\" list, when present, says what a token stands for.
 
 Rules:
-- Reply with the finished message only. No quotation marks around it, no notes.
-- Say everything the input says and nothing it does not. Add only the small words that grammar needs.
+- Reply with the finished message only, with no notes.
+- Say everything the input says and nothing it does not.
+- If the input opens with a question word (WHAT, WHY, HOW, WHEN, WHERE, WHICH, WHO), or with CAN, DO, HAVE, WILL or WOULD followed by a person, write a question.
 - Keep it short and direct, the way a developer writes to a colleague.
 - Tone tokens such as FORMAL, CASUAL, POLITE set the style. Do not write them out.
 - Earlier messages are context. Use them to resolve words like IT, THIS, SAME and AGAIN.";
 
 /// Worked examples, sent as earlier turns so small models copy the pattern.
-const EXAMPLES: [(&str, &str); 4] = [
+const EXAMPLES: [(&str, &str); 5] = [
     ("FIX BUG IN \"login\"", "Fix the bug in login."),
     ("WHY TEST FAILING", "Why is the test failing?"),
+    (
+        "I \"stuck\" ON \"migration\"",
+        "I'm stuck on the migration.",
+    ),
     (
         "RENAME \"foo\" TO \"bar\" WITH_TESTS\n\nMeanings:\nWITH_TESTS = add or update tests that cover this",
         "Rename foo to bar, and add or update tests that cover it.",
@@ -254,7 +260,7 @@ mod tests {
 
     #[test]
     fn examples_use_the_same_format_as_real_input() {
-        let gloss_example = EXAMPLES[2].0;
+        let gloss_example = EXAMPLES[3].0;
         let same = utterance(vec![
             concept("RENAME", None),
             word("foo"),
@@ -290,6 +296,52 @@ mod tests {
         }
     }
 
+    fn system_prompt() -> String {
+        messages(
+            &utterance(vec![concept("OK", None)]),
+            &[],
+            &PromptOptions::default(),
+        )[0]
+        .content
+        .clone()
+    }
+
+    // The three rules below come from the round trip in docs/COVERAGE.md,
+    // where the decoder broke each of them.
+
+    #[test]
+    fn instructions_ask_to_restore_dropped_articles_and_be() {
+        let system = system_prompt();
+        assert!(system.contains("articles (a, an, the)"), "{system}");
+        assert!(system.contains("forms of \"be\""), "{system}");
+        assert!(system.contains("next to quoted words too"), "{system}");
+    }
+
+    #[test]
+    fn instructions_forbid_quote_marks_in_the_reply() {
+        assert!(system_prompt().contains("never put quote marks in your reply"));
+    }
+
+    #[test]
+    fn instructions_say_when_to_write_a_question() {
+        let system = system_prompt();
+        assert!(system.contains("write a question"), "{system}");
+        assert!(
+            system.contains("WHAT, WHY, HOW, WHEN, WHERE, WHICH, WHO"),
+            "{system}"
+        );
+    }
+
+    #[test]
+    fn an_example_restores_be_next_to_a_literal_word() {
+        let shown = EXAMPLES.iter().any(|(input, output)| {
+            input.contains('"')
+                && !input.contains("BE")
+                && (output.contains(" am ") || output.contains("'m ") || output.contains(" are "))
+        });
+        assert!(shown, "no example puts back a dropped form of be");
+    }
+
     #[test]
     fn the_prompt_stays_small() {
         let built = messages(
@@ -298,8 +350,8 @@ mod tests {
             &PromptOptions::default(),
         );
         let characters: usize = built.iter().map(|message| message.content.len()).sum();
-        // Roughly four characters per token: keep the fixed cost near 400 tokens.
-        assert!(characters < 1700, "prompt grew to {characters} characters");
+        // Roughly four characters per token: keep the fixed cost near 500 tokens.
+        assert!(characters < 2100, "prompt grew to {characters} characters");
     }
 
     #[test]

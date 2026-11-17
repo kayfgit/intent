@@ -237,7 +237,10 @@ pub fn base_forms(word: &str) -> Vec<String> {
         return forms;
     }
     // "thank" → THANKS, "doc" → DOCS: tokens that are themselves plural.
-    add(format!("{word}s"));
+    // Short words are skipped: "a" + s is AS and "hi" + s is HIS.
+    if word.len() >= 3 {
+        add(format!("{word}s"));
+    }
     let rules: [(&str, &[&str]); 9] = [
         ("ies", &["y"]),
         ("ied", &["y"]),
@@ -525,6 +528,9 @@ mod tests {
             Class::Concept
         );
         assert_eq!(matcher.classify("the"), Class::Grammar);
+        // The plural-token rule must not turn "a" into AS or "hi" into HIS.
+        assert_eq!(matcher.classify("a"), Class::Grammar);
+        assert_eq!(matcher.concept("hi"), None);
         assert_eq!(matcher.classify("were"), Class::Grammar);
         assert_eq!(matcher.classify("banana"), Class::Spelled);
         // Clause-sized tokens never match a single word.

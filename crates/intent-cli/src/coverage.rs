@@ -3,7 +3,7 @@
 //! Every word of a corpus is put in one of three groups:
 //!
 //! - **concept**: a concept token covers it, directly ("fix" → `FIX`) or as a
-//!   form the decoder can produce ("fixed", "fixes" → `FIX`; "me" → `I`).
+//!   form the decoder can produce ("fixed", "fixes" → `FIX`).
 //! - **grammar**: an article or a form of "be", which the decoder adds on its
 //!   own when it writes the sentence. Costs no stroke.
 //! - **spelled**: everything else, typed letter by letter.
@@ -114,10 +114,6 @@ const IRREGULAR: &[(&str, &str)] = &[
     ("thrown", "throw"),
     ("wore", "wear"),
     ("worn", "wear"),
-    ("could", "can"),
-    ("would", "will"),
-    ("should", "should"),
-    ("might", "may"),
     ("caught", "catch"),
     ("fought", "fight"),
     ("sought", "seek"),
@@ -133,29 +129,8 @@ const IRREGULAR: &[(&str, &str)] = &[
     ("hurt", "hurt"),
 ];
 
-/// Object, possessive and reflexive pronouns mapped to the subject form.
-const PRONOUN: &[(&str, &str)] = &[
-    ("me", "i"),
-    ("my", "i"),
-    ("mine", "i"),
-    ("myself", "i"),
-    ("your", "you"),
-    ("yours", "you"),
-    ("yourself", "you"),
-    ("us", "we"),
-    ("our", "we"),
-    ("ours", "we"),
-    ("ourselves", "we"),
-    ("its", "it"),
-    ("itself", "it"),
-    ("them", "they"),
-    ("their", "they"),
-    ("theirs", "they"),
-    ("themselves", "they"),
-    ("him", "he"),
-    ("his", "he"),
-    ("her", "she"),
-];
+/// Words a suffix rule would misread: "news" is not the plural of "new".
+const NOT_INFLECTED: &[&str] = &["news", "always", "perhaps", "series", "species"];
 
 /// Which group a word fell in.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -245,8 +220,9 @@ fn expand_contraction(word: &str) -> Vec<String> {
 /// the word itself.
 pub fn base_forms(word: &str) -> Vec<String> {
     let mut forms = vec![word.to_owned()];
-    // Table entries are exact, so they may be one letter long ("me" → "i").
-    for (form, base) in IRREGULAR.iter().chain(PRONOUN.iter()) {
+    // Pronoun case ("me" → "i") and modals ("would" → "will") are left out on
+    // purpose: in round-trip tests the decoder could not restore them.
+    for (form, base) in IRREGULAR {
         if *form == word && !forms.iter().any(|known| known == base) {
             forms.push((*base).to_owned());
         }
@@ -257,6 +233,9 @@ pub fn base_forms(word: &str) -> Vec<String> {
             forms.push(form);
         }
     };
+    if NOT_INFLECTED.contains(&word) {
+        return forms;
+    }
     // "thank" → THANKS, "doc" → DOCS: tokens that are themselves plural.
     add(format!("{word}s"));
     let rules: [(&str, &[&str]); 9] = [
@@ -521,8 +500,10 @@ mod tests {
         assert!(has("tried", "try"));
         assert!(has("went", "go"));
         assert!(has("thought", "think"));
-        assert!(has("me", "i"));
-        assert!(has("their", "they"));
+        // Changes of meaning are not forms of the same word.
+        assert!(!has("me", "i"));
+        assert!(!has("would", "will"));
+        assert!(!has("news", "new"));
         assert!(has("quickly", "quick"));
         assert!(has("thank", "thanks"));
         assert_eq!(base_forms("fix")[0], "fix");
@@ -535,7 +516,8 @@ mod tests {
         let layout = layout();
         let matcher = Matcher::new(&layout);
         assert_eq!(matcher.concept("fixed"), Some("FIX"));
-        assert_eq!(matcher.concept("me"), Some("I"));
+        assert_eq!(matcher.concept("me"), None);
+        assert_eq!(matcher.concept("news"), None);
         assert_eq!(matcher.concept("thinking"), Some("THINK"));
         assert_eq!(
             matcher.classify("FIX".to_lowercase().as_str()),

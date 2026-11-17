@@ -81,6 +81,14 @@ See the strokes for a phrase:
 cargo run -p intent-cli -- how layouts/intent-v0.toml FIX BUG IN login WITH_TESTS "<send>"
 ```
 
+Measure how much of a text file the layout covers (one sentence per line):
+
+```bash
+cargo run -p intent-cli -- coverage layouts/intent-v0.toml corpus.txt
+```
+
+Results for everyday English are in [docs/COVERAGE.md](docs/COVERAGE.md).
+
 Apply chords and see the buffer:
 
 ```bash

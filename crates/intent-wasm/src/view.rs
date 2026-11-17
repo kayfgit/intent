@@ -571,7 +571,7 @@ mod tests {
         assert_eq!(full_stop.shape, "IMRP");
         assert_eq!(full_stop.shifted.as_deref(), Some(":"));
 
-        assert_eq!(view.families.len(), 19);
+        assert_eq!(view.families.len(), 23);
         let act = &view.families[0];
         assert_eq!(
             (act.id.as_str(), act.plane, act.kind, act.left.as_str()),

@@ -237,7 +237,10 @@ pub fn base_forms(word: &str) -> Vec<String> {
         return forms;
     }
     // "thank" → THANKS, "doc" → DOCS: tokens that are themselves plural.
-    add(format!("{word}s"));
+    // Short words are skipped: "a" + s is AS and "hi" + s is HIS.
+    if word.len() >= 3 {
+        add(format!("{word}s"));
+    }
     let rules: [(&str, &[&str]); 9] = [
         ("ies", &["y"]),
         ("ied", &["y"]),
@@ -516,7 +519,8 @@ mod tests {
         let layout = layout();
         let matcher = Matcher::new(&layout);
         assert_eq!(matcher.concept("fixed"), Some("FIX"));
-        assert_eq!(matcher.concept("me"), None);
+        // "me" is its own token, never a form of I.
+        assert_eq!(matcher.concept("me"), Some("ME"));
         assert_eq!(matcher.concept("news"), None);
         assert_eq!(matcher.concept("thinking"), Some("THINK"));
         assert_eq!(
@@ -524,6 +528,9 @@ mod tests {
             Class::Concept
         );
         assert_eq!(matcher.classify("the"), Class::Grammar);
+        // The plural-token rule must not turn "a" into AS or "hi" into HIS.
+        assert_eq!(matcher.classify("a"), Class::Grammar);
+        assert_eq!(matcher.concept("hi"), None);
         assert_eq!(matcher.classify("were"), Class::Grammar);
         assert_eq!(matcher.classify("banana"), Class::Spelled);
         // Clause-sized tokens never match a single word.
@@ -590,11 +597,11 @@ mod tests {
         report.add_frequency(&matcher, "pizza", 10);
         report.add_frequency(&matcher, "don't", 5);
         assert_eq!(report.words, 170);
-        // "don't" is "do" (spelled: v0 has no DO) and "not" (a concept).
-        assert_eq!(report.concept, 100 + 5);
+        // "don't" is "do" and "not", both concepts.
+        assert_eq!(report.concept, 100 + 5 + 5);
         assert_eq!(report.grammar, 50);
-        assert_eq!(report.spelled, 10 + 5);
-        assert_eq!(report.top_missing(2), [("pizza", 10), ("do", 5)]);
+        assert_eq!(report.spelled, 10);
+        assert_eq!(report.top_missing(2), [("pizza", 10)]);
         assert_eq!(report.utterances, 0);
     }
 

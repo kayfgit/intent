@@ -251,9 +251,14 @@ These are known unknowns. Each needs an experiment, not an opinion.
 - **How lossy is too lossy?** Fewer strokes means more guessing by the AI and
   more corrections. The decoder milestone needs a test set to find the
   balance.
-- **How much does v0 cover?** A bit under half of everyday spoken words need no
-  spelling; see [COVERAGE.md](COVERAGE.md). Developer prompts, the target,
-  are not measured yet.
+- **How much does v0 cover?** Two thirds of everyday spoken words need no
+  spelling, and the decoder keeps the meaning of about 4 lines in 5; see
+  [COVERAGE.md](COVERAGE.md). Developer prompts, the target, are not
+  measured yet.
+- **How is tense entered?** Not at all yet: "did" and "was" are entered as
+  their base concepts and the past is lost. This is now the main cause of
+  wrong decodes. Candidates: modifier concepts such as `PAST`, or a tense
+  shape on the thumbs.
 - **Which letters first?** v0 blends English and Portuguese letter frequency.
   A corpus of real prompts should decide.
 - **Does it beat typing?** Unknown until milestone 4. The honest baseline is

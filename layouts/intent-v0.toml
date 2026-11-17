@@ -14,7 +14,7 @@
 
 [layout]
 name = "intent-v0"
-version = "0.1.0"
+version = "0.2.0"
 description = "Seed layout for developers talking to AI coding assistants."
 
 # Thumb-only chords: the three things you do most.
@@ -201,6 +201,54 @@ members = [
   "GREET", "NAME", "MEET", "SEND", "MESSAGE",
   "EMAIL", "TEAM", "PROJECT", "TASK", "ISSUE",
   "QUESTION", "ANSWER", "IDEA", "PROBLEM", "SOLUTION",
+]
+
+# Everyday words. The 50 words most often spelled in everyday English
+# (subtitles and DailyDialog, see docs/COVERAGE.md), grouped by kind and
+# ordered by how often they occur. Interjections such as "oh" and "yeah", and
+# forms of words that already have a token ("did", "going"), were left out.
+[[family]]
+id = "little"
+name = "Little words"
+plane = "extended"
+left = "P"
+members = [
+  "THAT", "OF", "ON", "THERE", "JUST",
+  "AT", "HERE", "ABOUT", "UP", "OUT",
+  "AS", "TOO", "MUCH", "BY", "BACK",
+]
+
+[[family]]
+id = "verbs"
+name = "Everyday verbs"
+plane = "extended"
+left = "IM"
+members = [
+  "DO", "HAVE", "WOULD", "GET", "GO",
+  "SEE", "COME", "TAKE", "COULD", "LOOK",
+  "TELL",
+]
+
+[[family]]
+id = "pronouns"
+name = "Pronouns"
+plane = "extended"
+left = "MR"
+members = [
+  "ME", "YOUR", "MY", "HE", "SHE",
+  "HIM", "HER", "OUR", "THEM", "WHO",
+  "HIS", "US",
+]
+
+[[family]]
+id = "everyday"
+name = "Everyday words"
+plane = "extended"
+left = "IR"
+members = [
+  "WELL", "GOOD", "RIGHT", "ONE", "TIME",
+  "REALLY", "VERY", "SOME", "SORRY", "ANY",
+  "PEOPLE", "TWO",
 ]
 
 # ---------------------------------------------------------------------------

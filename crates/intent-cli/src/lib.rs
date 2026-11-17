@@ -651,7 +651,7 @@ mod tests {
         assert_eq!(outcome.err, "");
         assert_eq!(
             outcome.out,
-            "intent-v0 0.1.0: ok, 376 of 1023 chords assigned\n"
+            "intent-v0 0.2.0: ok, 426 of 1023 chords assigned\n"
         );
         assert_eq!(outcome.code, OK);
     }
@@ -738,13 +738,13 @@ mod tests {
         let outcome = intent(&["stats", V0, "--top", "2"]);
         assert_eq!(outcome.code, OK, "{}", outcome.err);
         let out = outcome.out;
-        assert!(out.starts_with("intent-v0 0.1.0\nSeed layout"));
+        assert!(out.starts_with("intent-v0 0.2.0\nSeed layout"));
         assert!(out.contains("thumbs           3         3\n"), "{out}");
         assert!(out.contains("core           150       225\n"), "{out}");
         assert!(out.contains("user             0       225\n"), "{out}");
-        assert!(out.contains("total          376      1023\n"), "{out}");
+        assert!(out.contains("total          426      1023\n"), "{out}");
         assert!(
-            out.contains("195 concepts, 162 text chords, 19 command chords\n"),
+            out.contains("245 concepts, 162 text chords, 19 command chords\n"),
             "{out}"
         );
         assert!(

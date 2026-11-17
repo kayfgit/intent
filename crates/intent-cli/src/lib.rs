@@ -4,6 +4,8 @@
 //! streams as parameters so the whole tool can be tested without spawning a
 //! process.
 
+pub mod coverage;
+
 use std::ffi::OsString;
 use std::fs;
 use std::io::{self, Write};
@@ -62,6 +64,29 @@ enum Cmd {
         #[arg(required = true, allow_hyphen_values = true)]
         items: Vec<String>,
     },
+    /// Show what a user would enter for each line of a text file
+    Encode {
+        /// Path to the layout file
+        layout: PathBuf,
+        /// A text file with one sentence per line
+        corpus: PathBuf,
+        /// Print JSON lines with the decoder messages for each sentence
+        #[arg(long)]
+        messages: bool,
+    },
+    /// Measure how much of a text corpus the layout covers with concepts
+    Coverage {
+        /// Path to the layout file
+        layout: PathBuf,
+        /// A text file: one utterance per line, or `word count` lines with --frequency
+        corpus: PathBuf,
+        /// Treat each line as a word and how often it occurs
+        #[arg(long)]
+        frequency: bool,
+        /// How many of the most frequent spelled words to list
+        #[arg(long, default_value_t = 30)]
+        top: usize,
+    },
 }
 
 /// Runs the tool and returns its exit code.
@@ -87,6 +112,17 @@ where
         Cmd::Stats { layout, top } => stats(layout, *top, out, err),
         Cmd::Sim { layout, chords } => sim(layout, chords, out, err),
         Cmd::How { layout, items } => how(layout, items, out, err),
+        Cmd::Coverage {
+            layout,
+            corpus,
+            frequency,
+            top,
+        } => coverage_command(layout, corpus, *frequency, *top, out, err),
+        Cmd::Encode {
+            layout,
+            corpus,
+            messages,
+        } => encode_command(layout, corpus, *messages, out, err),
     };
     result.unwrap_or_else(|error| {
         let _ = writeln!(err, "error: {error}");
@@ -335,6 +371,147 @@ fn how(path: &Path, items: &[String], out: &mut dyn Write, err: &mut dyn Write) 
     match sent {
         Some(utterance) => writeln!(out, "sends: {utterance}")?,
         None => writeln!(out, "buffer: {}", engine.buffer().utterance)?,
+    }
+    Ok(OK)
+}
+
+fn encode_command(
+    path: &Path,
+    corpus: &Path,
+    messages: bool,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> io::Result<u8> {
+    let layout = match load(path, err)? {
+        Ok(compiled) => compiled.layout,
+        Err(code) => return Ok(code),
+    };
+    let text = match fs::read_to_string(corpus) {
+        Ok(text) => text,
+        Err(error) => {
+            writeln!(err, "error: cannot read {}: {error}", corpus.display())?;
+            return Ok(USAGE);
+        }
+    };
+    let matcher = coverage::Matcher::new(&layout);
+    let options = intent_core::prompt::PromptOptions::default();
+    for line in text.lines().map(str::trim).filter(|line| !line.is_empty()) {
+        let utterance = coverage::encode(&matcher, line);
+        if messages {
+            let chat: Vec<serde_json::Value> = intent_core::prompt::messages(&utterance, &[], &options)
+                .into_iter()
+                .map(|message| serde_json::json!({ "role": message.role.name(), "content": message.content }))
+                .collect();
+            let record = serde_json::json!({ "text": line, "wire": utterance.to_string(), "messages": chat });
+            writeln!(out, "{record}")?;
+        } else {
+            writeln!(out, "{utterance}")?;
+        }
+    }
+    Ok(OK)
+}
+
+fn coverage_command(
+    path: &Path,
+    corpus: &Path,
+    frequency: bool,
+    top: usize,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> io::Result<u8> {
+    let layout = match load(path, err)? {
+        Ok(compiled) => compiled.layout,
+        Err(code) => return Ok(code),
+    };
+    let text = match fs::read_to_string(corpus) {
+        Ok(text) => text,
+        Err(error) => {
+            writeln!(err, "error: cannot read {}: {error}", corpus.display())?;
+            return Ok(USAGE);
+        }
+    };
+    let matcher = coverage::Matcher::new(&layout);
+    let mut report = coverage::Report::default();
+    for (number, line) in text.lines().enumerate() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if frequency {
+            let parsed = line
+                .rsplit_once(char::is_whitespace)
+                .and_then(|(word, count)| Some((word.trim(), count.parse::<u64>().ok()?)));
+            let Some((word, count)) = parsed else {
+                writeln!(
+                    err,
+                    "error: {} line {}: expected `word count`, found \"{line}\"",
+                    corpus.display(),
+                    number + 1
+                )?;
+                return Ok(USAGE);
+            };
+            report.add_frequency(&matcher, word, count);
+        } else {
+            report.add_utterance(&matcher, line);
+        }
+    }
+
+    let words = report.words;
+    let pct = |part| coverage::percent(part, words);
+    writeln!(
+        out,
+        "{} {} on {}",
+        layout.meta().name,
+        layout.meta().version,
+        corpus.display()
+    )?;
+    writeln!(out)?;
+    writeln!(out, "{:<10} {:>12} {:>7}", "words", "count", "share")?;
+    for (label, count) in [
+        ("concept", report.concept),
+        ("grammar", report.grammar),
+        ("spelled", report.spelled),
+    ] {
+        writeln!(out, "{label:<10} {count:>12} {:>7}", pct(count))?;
+    }
+    writeln!(out, "{:<10} {words:>12}", "total")?;
+    if report.unenterable > 0 {
+        writeln!(
+            out,
+            "{} spelled words contain a character no chord types",
+            report.unenterable
+        )?;
+    }
+    writeln!(out)?;
+    writeln!(
+        out,
+        "no spelling needed for {} of words ({} concept + grammar)",
+        pct(report.concept + report.grammar),
+        report.concept + report.grammar
+    )?;
+    if report.utterances > 0 {
+        writeln!(
+            out,
+            "{} of {} utterances need no spelling at all ({})",
+            report.utterances_without_spelling,
+            report.utterances,
+            coverage::percent(report.utterances_without_spelling, report.utterances)
+        )?;
+        #[allow(clippy::cast_precision_loss)] // corpus counts are far below 2^52
+        let per_word = |total: u64| total as f64 / words.max(1) as f64;
+        writeln!(
+            out,
+            "{:.2} strokes per word, against {:.2} keystrokes per word to type the same words",
+            per_word(report.strokes),
+            per_word(report.keystrokes)
+        )?;
+    }
+    if top > 0 && !report.missing.is_empty() {
+        writeln!(out)?;
+        writeln!(out, "most frequent spelled words:")?;
+        for (word, count) in report.top_missing(top) {
+            writeln!(out, "  {count:>10} {:>6}  {word}", pct(count))?;
+        }
     }
     Ok(OK)
 }
@@ -715,6 +892,118 @@ mod tests {
         let no_send = intent(&["how", path_text(&path), "<send>"]);
         assert!(no_send.err.contains("this layout has no chord for <send>"));
         fs::remove_file(path).expect("cleanup");
+    }
+
+    #[test]
+    fn coverage_reports_running_text() {
+        let corpus = std::env::temp_dir().join(format!("intent-cov-{}.txt", std::process::id()));
+        fs::write(
+            &corpus,
+            "Fix the bug in login.
+
+Thanks!
+",
+        )
+        .expect("temp file");
+        let outcome = intent(&["coverage", V0, path_text(&corpus), "--top", "1"]);
+        assert_eq!(outcome.code, OK, "{}", outcome.err);
+        let out = outcome.out;
+        assert!(out.contains("concept               4   66.7%"), "{out}");
+        assert!(out.contains("grammar               1   16.7%"), "{out}");
+        assert!(out.contains("spelled               1   16.7%"), "{out}");
+        assert!(
+            out.contains("1 of 2 utterances need no spelling at all (50.0%)"),
+            "{out}"
+        );
+        assert!(out.contains("1.83 strokes per word"), "{out}");
+        assert!(
+            out.ends_with(
+                "most frequent spelled words:
+           1  16.7%  login
+"
+            ),
+            "{out}"
+        );
+        fs::remove_file(corpus).expect("cleanup");
+    }
+
+    #[test]
+    fn encode_prints_one_utterance_per_line_or_json_with_messages() {
+        let corpus = std::env::temp_dir().join(format!("intent-enc-{}.txt", std::process::id()));
+        fs::write(
+            &corpus,
+            "I fixed the bug.
+
+Thanks!
+",
+        )
+        .expect("temp file");
+        let plain = intent(&["encode", V0, path_text(&corpus)]);
+        assert_eq!(plain.code, OK, "{}", plain.err);
+        assert_eq!(
+            plain.out,
+            "I FIX BUG
+THANKS
+"
+        );
+
+        let json = intent(&["encode", V0, path_text(&corpus), "--messages"]);
+        assert_eq!(json.code, OK, "{}", json.err);
+        let first: serde_json::Value =
+            serde_json::from_str(json.out.lines().next().expect("a line")).expect("json");
+        assert_eq!(first["text"], "I fixed the bug.");
+        assert_eq!(first["wire"], "I FIX BUG");
+        let messages = first["messages"].as_array().expect("messages");
+        assert_eq!(messages[0]["role"], "system");
+        assert_eq!(messages.last().expect("last")["content"], "I FIX BUG");
+        fs::remove_file(corpus).expect("cleanup");
+
+        assert_eq!(intent(&["encode", V0, "no/such/file.txt"]).code, USAGE);
+    }
+
+    #[test]
+    fn coverage_reads_frequency_lists() {
+        let corpus = std::env::temp_dir().join(format!("intent-freq-{}.txt", std::process::id()));
+        fs::write(
+            &corpus,
+            "you 300
+the 100
+pizza 100
+",
+        )
+        .expect("temp file");
+        let outcome = intent(&["coverage", V0, path_text(&corpus), "--frequency"]);
+        assert_eq!(outcome.code, OK, "{}", outcome.err);
+        assert!(
+            outcome.out.contains("concept             300   60.0%"),
+            "{}",
+            outcome.out
+        );
+        assert!(!outcome.out.contains("utterances"), "{}", outcome.out);
+
+        fs::write(
+            &corpus,
+            "you 300
+broken line
+",
+        )
+        .expect("temp file");
+        let bad = intent(&["coverage", V0, path_text(&corpus), "--frequency"]);
+        assert_eq!(bad.code, USAGE);
+        assert!(
+            bad.err.contains("line 2: expected `word count`"),
+            "{}",
+            bad.err
+        );
+        fs::remove_file(corpus).expect("cleanup");
+
+        let missing = intent(&["coverage", V0, "no/such/corpus.txt"]);
+        assert_eq!(missing.code, USAGE);
+        assert!(
+            missing
+                .err
+                .starts_with("error: cannot read no/such/corpus.txt")
+        );
     }
 
     #[test]

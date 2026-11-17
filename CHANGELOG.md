@@ -32,6 +32,11 @@ All notable changes to this project are recorded here. The format follows
 - `intent-core`: a `Session` that joins the stroke detector and the engine,
   and a `prompt` module that builds the messages a decoder model receives.
 - `intent-wasm`: a WebAssembly bridge exposing the engine to web pages.
+- `intent coverage`: measures how much of a corpus a layout covers with
+  concepts, and lists the most frequent words that still need spelling.
+- `intent encode`: shows what a user would enter for each sentence, with
+  the decoder messages as JSON for round-trip tests.
+- `docs/COVERAGE.md`: intent-v0 measured on everyday English.
 
 ### Changed
 

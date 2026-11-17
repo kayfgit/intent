@@ -251,6 +251,9 @@ These are known unknowns. Each needs an experiment, not an opinion.
 - **How lossy is too lossy?** Fewer strokes means more guessing by the AI and
   more corrections. The decoder milestone needs a test set to find the
   balance.
+- **How much does v0 cover?** A bit under half of everyday spoken words need no
+  spelling; see [COVERAGE.md](COVERAGE.md). Developer prompts, the target,
+  are not measured yet.
 - **Which letters first?** v0 blends English and Portuguese letter frequency.
   A corpus of real prompts should decide.
 - **Does it beat typing?** Unknown until milestone 4. The honest baseline is

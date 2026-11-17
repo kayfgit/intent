@@ -40,6 +40,12 @@ All notable changes to this project are recorded here. The format follows
 
 ### Changed
 
+- intent-v0 0.2.0 adds the 50 words most often spelled in everyday English
+  (that, of, have, do, me, your…) as four extended-plane families. Words
+  needing no spelling rose from 47% to 68% in everyday conversations.
+- The decoder prompt now says to restore dropped articles and forms of
+  "be", never to print quote marks, and when to write a question.
+
 - The demo's default model is now `openai/gpt-oss-120b`, asked for low
   reasoning effort. Groq removed `llama-3.3-70b-versatile`, so the old
   default failed with "model does not exist".

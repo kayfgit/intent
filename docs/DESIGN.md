@@ -194,11 +194,16 @@ call directly.
 | Local (Ollama and similar) | Free and private | Needs a capable machine and setup |
 
 Groq is the default because its limits are published and stable, it needs no
-card, it is fast (its model page lists 280 tokens a second for
-`llama-3.3-70b-versatile`, the default model), and its data page says
+card, it is fast (a decode with `openai/gpt-oss-120b`, the default model,
+took 0.6 to 0.8 s when checked), and its data page says
 inference data is not retained by default, apart from temporary logs for
 abuse monitoring. The four hosted providers answer browser requests: their
 APIs returned permissive CORS headers when checked.
+
+Groq removed `llama-3.3-70b-versatile`, the first default, in November 2026.
+gpt-oss is a reasoning model, so the demo asks it for low reasoning effort,
+which cut one decode from 128 to 51 output tokens without changing the
+answer.
 
 Every provider above speaks the same OpenAI-style chat format, so the demo
 has one small client and the provider is a setting. Limits change often;

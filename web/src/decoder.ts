@@ -25,7 +25,7 @@ export const PROVIDERS: readonly Provider[] = [
     id: 'groq',
     name: 'Groq',
     baseUrl: 'https://api.groq.com/openai/v1',
-    defaultModel: 'llama-3.3-70b-versatile',
+    defaultModel: 'openai/gpt-oss-120b',
     keyUrl: 'https://console.groq.com/keys',
     needsKey: true,
     note: 'Free with no card, and very fast. Daily limits apply.',
@@ -81,6 +81,19 @@ export class DecodeError extends Error {
     this.name = 'DecodeError';
     this.kind = kind;
   }
+}
+
+/**
+ * The chat request. A low temperature keeps the same input giving the same
+ * sentence. gpt-oss models think before answering: low effort keeps that
+ * short, which saves free daily tokens, and `max_tokens` leaves room for it.
+ */
+export function requestBody(model: string, messages: readonly ChatMessage[]): object {
+  const body: Record<string, unknown> = { model, messages, temperature: 0.2, max_tokens: 1024 };
+  if (/gpt-oss/i.test(model)) {
+    body.reasoning_effort = 'low';
+  }
+  return body;
 }
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
@@ -175,8 +188,7 @@ export async function decode(
     {
       method: 'POST',
       headers: headersFor(settings),
-      // A low temperature keeps the same input giving the same sentence.
-      body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 400 }),
+      body: JSON.stringify(requestBody(model, messages)),
     },
     fetchFn,
   );

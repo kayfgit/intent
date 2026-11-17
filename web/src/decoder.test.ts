@@ -52,7 +52,7 @@ describe('providers', () => {
     expect(providerById('nope').id).toBe('groq');
     expect(endpointFor(DEFAULT_SETTINGS)).toEqual({
       baseUrl: 'https://api.groq.com/openai/v1',
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
     });
   });
 
@@ -86,10 +86,11 @@ describe('decode', () => {
       Authorization: 'Bearer secret',
     });
     expect(JSON.parse(String(calls[0]?.init?.body))).toEqual({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages: MESSAGES,
       temperature: 0.2,
-      max_tokens: 400,
+      max_tokens: 1024,
+      reasoning_effort: 'low',
     });
   });
 
@@ -111,6 +112,8 @@ describe('decode', () => {
     };
     await decode(local, MESSAGES, fetchFn);
     expect(calls[0]?.url).toBe('http://localhost:11434/v1/chat/completions');
+    // Only gpt-oss models get a reasoning effort; other servers may reject the field.
+    expect(JSON.parse(String(calls[0]?.init?.body))).not.toHaveProperty('reasoning_effort');
     expect(calls[0]?.init?.headers).toEqual({ 'Content-Type': 'application/json' });
   });
 

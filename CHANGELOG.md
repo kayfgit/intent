@@ -35,5 +35,9 @@ All notable changes to this project are recorded here. The format follows
 
 ### Changed
 
+- The demo's default model is now `openai/gpt-oss-120b`, asked for low
+  reasoning effort. Groq removed `llama-3.3-70b-versatile`, so the old
+  default failed with "model does not exist".
+
 - The Rust toolchain is pinned in `rust-toolchain.toml`, so local runs and
   CI use the same compiler and lints.
